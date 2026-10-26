@@ -1,0 +1,45 @@
+<canvas id="c" tabindex="0" aria-label="Irie Bay, scène de jeu"></canvas>
+
+<div id="hud" hidden>
+  <div id="top-left">
+    <button id="help-btn" class="chip panel" aria-label="Commandes">?</button>
+    <button id="book-btn" class="chip panel" aria-label="Carnet : quêtes, compétences, amis">Carnet</button>
+    <button id="bag-btn" class="chip panel" aria-label="Sac à dos">Sac</button>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="zone"></div>
+  <div id="clock" class="panel">
+    <div class="cl-top"><svg id="cl-wx" viewBox="0 0 32 32" aria-hidden="true"></svg><span id="cl-wd">Lun.</span><span id="cl-d">1</span></div>
+    <div id="cl-season">Brise</div>
+    <div class="cl-time"><span id="cl-sun"></span><span id="cl-t">6h00</span></div>
+    <div class="cl-gold"><span class="coin"></span><span id="cl-g">0</span></div>
+  </div>
+  <div id="energy" class="panel plain" title="Énergie"><b>É</b><div id="en-fill"></div></div>
+  <div id="tracker" class="panel"></div>
+  <div id="itemname"></div>
+  <div id="prompt" class="panel"></div>
+  <div id="hotbar" class="panel" role="toolbar" aria-label="Barre d'objets"></div>
+</div>
+<div id="bubbles"></div>
+<div id="fishing" class="panel" hidden><canvas id="fish-c"></canvas><p>Maintiens <kbd>Espace</kbd></p></div>
+<div id="modal-wrap" hidden><div id="modal" class="panel" role="dialog" aria-modal="true"></div></div>
+<div id="touch" hidden>
+  <div id="joy"><i></i></div>
+  <div class="tbtns">
+    <button class="tbtn btn" id="t-eat">Manger</button>
+    <button class="tbtn btn primary" id="t-use">Outil</button>
+    <span></span>
+    <button class="tbtn btn" id="t-act">Action</button>
+  </div>
+</div>
+<div id="fade"></div>
+<div id="title">
+  <p class="eyebrow">Ferme, vagues et bonnes ondes</p>
+  <h1>Irie <span>Bay</span></h1>
+  <div class="stripe-bar"></div>
+  <div class="title-actions">
+    <button id="btn-continue" class="btn" hidden>Continuer</button>
+    <button id="btn-new" class="btn primary">Nouvelle partie</button>
+  </div>
+  <p class="hint"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd> ou flèches pour marcher · <kbd>Espace</kbd> ou clic pour utiliser l'outil · <kbd>E</kbd> pour parler, acheter, dormir · <kbd>C</kbd> carnet · <kbd>B</kbd> sac</p>
+</div>
