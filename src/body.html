@@ -5,7 +5,11 @@
     <button id="help-btn" class="chip panel" aria-label="Commandes">?</button>
     <button id="book-btn" class="chip panel" aria-label="Carnet : quêtes, compétences, amis">Carnet</button>
     <button id="bag-btn" class="chip panel" aria-label="Sac à dos">Sac</button>
+    <button id="craft-btn" class="chip panel" aria-label="Artisanat">Artisanat</button>
+    <button id="menu-btn" class="chip panel" aria-label="Menu, sauvegardes et paramètres">Menu</button>
+    <button id="test-btn" class="chip panel" hidden>Test</button>
   </div>
+  <div id="fps" hidden></div>
   <div id="toasts" aria-live="polite"></div>
   <div id="zone"></div>
   <div id="clock" class="panel">
@@ -13,6 +17,7 @@
     <div id="cl-season">Brise</div>
     <div class="cl-time"><span id="cl-sun"></span><span id="cl-t">6h00</span></div>
     <div class="cl-gold"><span class="coin"></span><span id="cl-g">0</span></div>
+    <div class="cl-lvl"><span id="cl-lv">Niv. 1</span><span class="bar"><i id="cl-xp"></i></span></div>
   </div>
   <div id="energy" class="panel plain" title="Énergie"><b>É</b><div id="en-fill"></div></div>
   <div id="tracker" class="panel"></div>
@@ -39,6 +44,7 @@
   <div class="stripe-bar"></div>
   <div class="title-actions">
     <button id="btn-continue" class="btn" hidden>Continuer</button>
+    <button id="btn-load" class="btn" hidden>Charger</button>
     <button id="btn-new" class="btn primary">Nouvelle partie</button>
   </div>
   <p class="hint"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd> ou flèches pour marcher · <kbd>Espace</kbd> ou clic pour utiliser l'outil · <kbd>E</kbd> pour parler, acheter, dormir · <kbd>C</kbd> carnet · <kbd>B</kbd> sac</p>

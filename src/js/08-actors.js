@@ -19,6 +19,7 @@ function makeCharacter(o) {
   if (o.pattern === 'flower') for (const [x, y, z, c] of [[-0.12, 0.62, 0.19, '#ff7ac8'], [0.1, 0.52, 0.2, '#f6c026'], [0.0, 0.66, 0.2, '#fff'], [-0.06, 0.45, 0.2, '#e2362f'], [0.14, 0.68, 0.17, '#ff7ac8']]) part(body, G.ico0, c, [0.04, 0.04, 0.02], [x, y, z]);
   if (o.pattern === 'surf') part(body, G.box, '#fff', [0.46, 0.05, 0.02], [0, 0.55, 0.2]);
   if (o.apron) part(body, G.box, o.apron, [0.34, 0.4, 0.04], [0, 0.48, 0.2]);
+  if (o.tie) part(body, G.box, o.tie, [0.07, 0.3, 0.03], [0, 0.56, 0.205]);
   const arms = [];
   for (const s of [-1, 1]) {
     const a = new THREE.Group(); a.position.set(s * 0.3, 0.72, 0); body.add(a);
@@ -55,6 +56,7 @@ function makeCharacter(o) {
   if (o.hat === 'bandana') { part(head, G.sph, '#e2362f', [0.268, 0.19, 0.265], [0, 0.08, -0.02]); part(head, G.box, '#e2362f', [0.12, 0.12, 0.05], [0, 0.07, -0.26], [0, 0, 0.7]); }
   if (o.hat === 'wrap') { RASTA.forEach((c, k) => part(head, G.cyl, c, [0.28 - k * 0.025, 0.085, 0.28 - k * 0.025], [0, 0.1 + k * 0.08, -0.02], [0.08 * (k % 2 ? 1 : -1), 0, 0])); part(head, G.sph, '#e2362f', [0.09, 0.09, 0.09], [0, 0.35, -0.02]); }
   if (o.hat === 'crown') for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2; part(head, G.ico0, ['#ff7ac8', '#f6c026', '#fff', '#e2362f'][k % 4], [0.065, 0.065, 0.065], [Math.cos(a) * 0.25, 0.16, Math.sin(a) * 0.25]); }
+  if (o.hat === 'melon') { part(head, G.sph, '#241a2e', [0.24, 0.15, 0.24], [0, 0.17, 0]); part(head, G.cyl, '#241a2e', [0.33, 0.025, 0.33], [0, 0.15, 0]); }
   if (o.glasses === 'round') { for (const s of [-1, 1]) part(head, G.cyl, '#241a2e', [0.07, 0.025, 0.07], [s * 0.095, 0.01, 0.245], [Math.PI / 2, 0, 0]); part(head, G.box, '#241a2e', [0.06, 0.015, 0.015], [0, 0.02, 0.25]); }
   if (o.glasses === 'aviator') { for (const s of [-1, 1]) part(head, G.cyl, '#e2362f', [0.085, 0.025, 0.07], [s * 0.1, 0.0, 0.245], [Math.PI / 2, 0, 0]); part(head, G.box, '#f6c026', [0.06, 0.015, 0.015], [0, 0.02, 0.25]); }
   const socket = new THREE.Group(); socket.position.y = -0.34; arms[1].add(socket);
@@ -79,6 +81,8 @@ function makeTools(socket) {
   t.can = new THREE.Group(); const cc = ['#2fb6a7', '#7fa5c4', '#f6c026'][tier('can')]; part(t.can, G.cyl, cc, [0.15, 0.24, 0.15], [0, -0.16, 0.06]); part(t.can, G.cyl6, cc, [0.025, 0.28, 0.025], [0, -0.16, 0.25], [1.0, 0, 0]);
   t.rod = new THREE.Group(); part(t.rod, G.cyl6, ['#c99a5a', '#4fb0a8', '#f6c026'][tier('rod')], [0.022, 1.7, 0.022], [0, -0.8, 0]); part(t.rod, G.cyl, '#8d96a3', [0.05, 0.05, 0.05], [0.06, -0.12, 0], [0, 0, Math.PI / 2]);
   t.seed = new THREE.Group(); part(t.seed, G.sph, '#d8c08a', [0.1, 0.12, 0.1], [0, -0.06, 0]);
+  t.machette = new THREE.Group(); part(t.machette, G.cyl6, '#5b3a2a', [0.03, 0.25, 0.03], [0, -0.1, 0]); part(t.machette, G.box, metal[tier('machette')], [0.07, 0.55, 0.02], [0, -0.48, 0.02]);
+  t.pioche = new THREE.Group(); part(t.pioche, G.cyl6, '#b07a48', [0.03, 0.9, 0.03], [0, -0.38, 0]); part(t.pioche, G.box, metal[tier('pioche')], [0.05, 0.05, 0.52], [0, -0.82, 0]);
   for (const k in t) { t[k].visible = false; socket.add(t[k]); }
   return t;
 }
@@ -96,7 +100,7 @@ function buildNPCs() {
   for (const d of NPC_DEFS) {
     const c = makeCharacter(d.look); scene.add(c.g);
     if (d.scale) c.g.scale.setScalar(d.scale);
-    const n = { ...d, ...c, x: 0, z: 0, path: null, pi: 0, hidden: true, cur: null, walk: 0, talkT: 0, face: 0, pause: 0, homeSpot: d.shop ? `${d.id}_home` : (d.id === 'ivy' || d.id === 'delroy' ? 'ivy_home' : 'ivy_home') };
+    const n = { ...d, ...c, x: 0, z: 0, path: null, pi: 0, hidden: true, cur: null, walk: 0, talkT: 0, face: 0, pause: 0, homeSpot: d.shop ? `${d.id}_home` : d.id === 'inspecteur' ? 'insp_home' : 'ivy_home' };
     c.g.visible = false; npcs.push(n);
   }
 }
@@ -104,6 +108,8 @@ function npcWanted(n) {
   let spot = n.sched[0][1];
   for (const [t, s] of n.sched) if (S.time >= t) spot = s;
   if (!n.shop && wet(S.weather) && S.time < 1200) spot = n.homeSpot;
+  if (n.id === 'inspecteur' && S.story.ch < 3) spot = 'insp_home';
+  if (spot === 'pier_end' && !S.unlocked.pier) spot = 'pier_a';
   return spot;
 }
 function placeNPC(n, spot) {

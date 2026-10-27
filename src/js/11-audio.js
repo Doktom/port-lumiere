@@ -3,7 +3,6 @@
 // =====================================================================
 let AC = null, muted = false, noiseBuf = null;
 const AU = { master: null, sfx: null, music: null, lp: null, rev: null, amb: {}, on: false, next: 0, step: 0, bar: 0, beats: [], pulse: 0, timer: 0, tempo: 76, birdT: 2, cricketT: 1, sources: [[63.5, 24.5, 20], [80, 33, 16], [11, 9, 9]] };
-try { muted = localStorage.getItem('ib-mute') === '1'; } catch (e) {}
 function audio() {
   try {
     if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); initAudioGraph(); }
@@ -23,7 +22,7 @@ function loopNoise(type, freq, q = 0.7) {
 function initAudioGraph() {
   noiseBuf = mkNoise();
   AU.master = AC.createGain(); AU.master.gain.value = muted ? 0 : 0.9; AU.master.connect(AC.destination);
-  AU.sfx = AC.createGain(); AU.sfx.gain.value = 1; AU.sfx.connect(AU.master);
+  AU.sfx = AC.createGain(); AU.sfx.gain.value = SET.sfx; AU.sfx.connect(AU.master);
   AU.music = AC.createGain(); AU.music.gain.value = 0.3;
   AU.lp = AC.createBiquadFilter(); AU.lp.type = 'lowpass'; AU.lp.frequency.value = 3200; AU.lp.Q.value = 0.4;
   AU.music.connect(AU.lp); AU.lp.connect(AU.master);
@@ -37,7 +36,7 @@ function initAudioGraph() {
   AU.on = true; AU.next = AC.currentTime + 0.2; AU.step = 0; AU.bar = 0;
   AU.timer = setInterval(musicTick, 25);
 }
-function setMuted(m) { muted = m; try { localStorage.setItem('ib-mute', m ? '1' : '0'); } catch (e) {} if (AU.master) AU.master.gain.setTargetAtTime(m ? 0 : 0.9, AC.currentTime, 0.05); }
+function setMuted(m) { muted = m; SET.mute = m; saveSettings(); if (AU.master) AU.master.gain.setTargetAtTime(m ? 0 : 0.9, AC.currentTime, 0.05); }
 
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 const CHORDS = [
@@ -108,13 +107,14 @@ function updateAudio(dt, tsec) {
   let near = 0; for (const [x, z, r] of AU.sources) near = Math.max(near, 1 - Math.hypot(P.x - x, P.z - z) / r);
   near = clamp(near, 0, 1);
   const inH = S.inside ? 0.12 : 0;
-  set(AU.music.gain, (0.16 + 0.6 * near + inH) * (S.title ? 1.1 : 1), 0.5); set(AU.lp.frequency, 1400 + near * 14000 + (ENV.rain > 0.3 ? 0 : 1200), 0.5);
+  set(AU.music.gain, (0.16 + 0.6 * near + inH) * (S.title ? 1.1 : 1) * SET.music * 1.4, 0.5); set(AU.lp.frequency, 1400 + near * 14000 + (ENV.rain > 0.3 ? 0 : 1200), 0.5);
   // ambiances
   const cz = coastZ(clamp(Math.floor(P.x), 0, W - 1)), dSea = Math.max(0, cz - P.z), dRiv = Math.abs(P.x - riverX(Math.floor(P.z)));
-  set(AU.amb.ocean.g.gain, Math.pow(clamp(1 - dSea / 24, 0, 1), 1.5) * 0.2 + 0.015);
-  set(AU.amb.river.g.gain, clamp(1 - dRiv / 12, 0, 1) * 0.07);
-  set(AU.amb.rain.g.gain, ENV.rain * (S.inside ? 0.05 : 0.14));
-  set(AU.amb.wind.g.gain, 0.02 + WIND.uWind.value * 0.03 + ENV.storm * 0.05);
+  const A = SET.amb * 1.4;
+  set(AU.amb.ocean.g.gain, (Math.pow(clamp(1 - dSea / 24, 0, 1), 1.5) * 0.2 + 0.015) * A);
+  set(AU.amb.river.g.gain, clamp(1 - dRiv / 12, 0, 1) * 0.07 * A);
+  set(AU.amb.rain.g.gain, ENV.rain * (S.inside ? 0.05 : 0.14) * A);
+  set(AU.amb.wind.g.gain, (0.02 + WIND.uWind.value * 0.03 + ENV.storm * 0.05) * A);
   // oiseaux le jour, grillons la nuit
   if (!S.modal && !S.title) {
     AU.birdT -= dt; AU.cricketT -= dt;

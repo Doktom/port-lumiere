@@ -3,9 +3,10 @@
 // =====================================================================
 const hotbarEl = $('#hotbar');
 function slotHTML(s, k, extra = '') {
-  const lab = s ? itemName(s) : 'Vide';
+  const lab = s ? itemName(s) + (s.qa ? ` (${QUAL[s.qa].name})` : '') : 'Vide';
   let inner = s ? `<img src="${icon(s.id, s.t || 0)}" alt="">` : '';
   if (s && ITEMS[s.id].kind !== 'tool' && s.q > 1) inner += `<span class="q">${s.q}</span>`;
+  if (s && s.qa) inner += `<span class="star" style="background:${QUAL[s.qa].col}"></span>`;
   if (s && s.id === 'can' && k < 10) inner += `<span class="gauge"><i style="width:${S.water / canMax(s.t || 0) * 100}%"></i></span>`;
   return { lab, inner };
 }
@@ -41,12 +42,15 @@ function floater(text, iconId) {
 let zoneT = 0;
 function showZone(name) { const z = $('#zone'); z.textContent = name; z.classList.add('on'); zoneT = 2.6; }
 function renderTracker() {
-  const el = $('#tracker'); const q = activeQuests()[0];
-  if (!q || S.title) { el.classList.remove('on'); return; }
+  const el = $('#tracker'), so = storyObjective();
+  const q = activeQuests().sort((a, b) => (b.story ? 1 : 0) - (a.story ? 1 : 0))[0];
+  if ((!q && !so) || S.title) { el.classList.remove('on'); return; }
+  const soH = so ? `<b>${so.title}</b>${so.desc}<div class="tbar"><i style="width:${so.a / so.b * 100}%"></i></div><small>${so.a} / ${so.b}</small>` : '';
+  if (!q) { el.innerHTML = soH; el.classList.add('on'); return; }
   let prog = '', pct = 0;
   if (q.deliver) { const [, it, n] = q.deliver; prog = `${Math.min(countItem(it), n)} / ${n} ${ITEMS[it].name}`; pct = Math.min(1, countItem(it) / n); }
   else { const v = Math.min(qProgress(q), q.n); prog = `${v} / ${q.n}`; pct = v / q.n; }
-  el.innerHTML = `<b>${q.title}</b>${q.deliver ? `Livre à ${NPC_BY_ID[q.deliver[0]].name}.` : q.desc}<div class="tbar"><i style="width:${pct * 100}%"></i></div><small>${prog}</small>`;
+  el.innerHTML = soH + (soH ? '<hr>' : '') + `<b>${q.title}</b>${q.deliver ? `Livre à ${NPC_BY_ID[q.deliver[0]].name}.` : q.desc}<div class="tbar"><i style="width:${pct * 100}%"></i></div><small>${prog}</small>`;
   el.classList.add('on');
 }
 
@@ -54,10 +58,10 @@ function renderTracker() {
 const modalWrap = $('#modal-wrap'), modal = $('#modal');
 const MODAL = { kind: null, tab: null, key: null, npc: null, line: '', msg: '', type: null, res: null, pick: -1 };
 function openModal(kind, extra = {}) { Object.assign(MODAL, { tab: null, msg: '', pick: -1 }, extra); S.modal = kind; MODAL.kind = kind.split(':')[0]; modalWrap.hidden = false; S.hold = false; renderModal(); const f = modal.querySelector('[data-focus]') || modal.querySelector('button'); f && f.focus(); }
-function closeModal() { if (!S.modal) return; const k = S.modal; S.modal = null; modalWrap.hidden = true; canvas.focus(); renderTracker(); if (k === 'day' && S.day === 2) toast("Astuce : arrose tes cultures chaque jour (la pluie le fait pour toi).") ; }
+function closeModal() { if (!S.modal) return; const k = S.modal; S.modal = null; modalWrap.hidden = true; canvas.focus(); renderTracker(); if (cutQueue.length) setTimeout(nextCut, 60); if (k === 'day' && S.day === 2) toast("Astuce : arrose tes cultures chaque jour (la pluie le fait pour toi).") ; }
 modalWrap.addEventListener('click', e => { if (e.target === modalWrap) closeModal(); });
 const money = () => `<span class="money"><span class="coin"></span>${S.gold.toLocaleString('fr-FR')} g</span>`;
-const sellable = kinds => S.inv.map((s, k) => [s, k]).filter(([s]) => s && kinds.includes(ITEMS[s.id].kind) && ITEMS[s.id].sell);
+const sellable = kinds => S.inv.map((s, k) => [s, k]).filter(([s]) => s && (kinds.includes(ITEMS[s.id].kind) || kinds.includes(s.id)) && ITEMS[s.id].sell);
 const tabsHTML = (tabs, cur) => `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button class="tab" role="tab" data-tab="${k}" aria-selected="${cur === k}">${l}</button>`).join('')}</div>`;
 const rowHTML = (ic, name, desc, price, acts, on) => `<div class="row${on ? ' on' : ''}"><img src="${ic}" alt=""><div class="nm"><b>${name}</b><small>${desc}</small></div><span class="price">${price === '' || price == null ? '' : `<span class="coin"></span>${price} g`}</span><div class="acts">${acts}</div></div>`;
 const foot = (extra = '') => `<div class="mfoot">${money()}<span style="display:flex;gap:8px">${extra}<button class="btn" data-close data-focus>Fermer</button></span></div>`;
@@ -66,6 +70,7 @@ function renderModal() {
   if (k === 'shop') html = shopHTML(); else if (k === 'bin') html = binHTML(); else if (k === 'sleep') html = sleepHTML();
   else if (k === 'day') html = dayHTML(); else if (k === 'help') html = helpHTML(); else if (k === 'npc') html = npcHTML(NPC_BY_ID[MODAL.npc], true);
   else if (k === 'animals') html = animalsHTML(); else if (k === 'book') html = bookHTML(); else if (k === 'bag') html = bagHTML();
+  else html = extraModalHTML(k);
   const st = modal.scrollTop; modal.innerHTML = html; modal.scrollTop = st;
 }
 
@@ -83,7 +88,7 @@ function seedDesc(it) {
 function shopHTML() {
   const key = MODAL.key, sh = SHOPS[key], n = NPC_BY_ID[sh.npc], tab = MODAL.tab;
   const tabs = { graines: [['buy', 'Acheter'], ['sell', 'Vendre'], ['talk', 'Discuter']], poisson: [['sell', 'Vendre'], ['upg', 'Améliorer'], ['talk', 'Discuter']],
-    cafe: [['buy', 'Menu'], ['sell', 'Vendre'], ['talk', 'Discuter']], boutique: [['buy', 'Acheter'], ['wear', 'Garde-robe'], ['talk', 'Discuter']] }[key];
+    cafe: [['buy', 'Menu'], ['sell', 'Vendre'], ['talk', 'Discuter']], boutique: [['buy', 'Acheter'], ['wear', 'Garde-robe'], ['sell', 'Vendre'], ['talk', 'Discuter']] }[key];
   let rows = '';
   if (tab === 'talk') return `<h2>${sh.name}</h2>` + tabsHTML(tabs, tab) + npcInner(n) + foot();
   if (key === 'graines' && tab === 'buy') {
@@ -110,7 +115,7 @@ function shopHTML() {
       }
     }
   } else if (key === 'poisson' && tab === 'upg') {
-    for (const tid of ['hoe', 'can', 'rod']) {
+    for (const tid of ['hoe', 'can', 'rod', 'machette', 'pioche']) {
       const t = toolTier(tid), nxt = t + 1;
       if (nxt > 2) { rows += rowHTML(icon(tid, t), TOOL_NAMES[tid][t], TOOL_HINT[tid][t] + ' · niveau maximum', '', '', true); continue; }
       const cost = Math.round(UPGRADE_COST[nxt] * (shopBonus(key) ? 0.9 : 1));
@@ -118,21 +123,21 @@ function shopHTML() {
     }
   } else {
     for (const [s, k2] of sellable(sh.buys)) {
-      const it = ITEMS[s.id], pr = priceSell(key, s.id);
-      rows += rowHTML(icon(s.id), it.name, `${s.q} en stock`, pr, `<button class="btn sm" data-sell="${k2}">Vendre</button>${s.q > 1 ? `<button class="btn sm" data-sellall="${k2}">Tout</button>` : ''}`);
+      const it = ITEMS[s.id], pr = priceSell(key, s.id, s.qa);
+      rows += rowHTML(icon(s.id), it.name + (s.qa ? ` · ${QUAL[s.qa].name}` : ''), `${s.q} en stock`, pr, `<button class="btn sm" data-sell="${k2}">Vendre</button>${s.q > 1 ? `<button class="btn sm" data-sellall="${k2}">Tout</button>` : ''}`);
     }
-    if (!rows) rows = `<p class="empty">${{ graines: 'Tante Pearl rachète tes légumes et fruits. Tu n\'en as pas sur toi.', poisson: 'Winston rachète le poisson. Va lancer ta ligne !', cafe: 'Zion rachète les herbes, œufs, laits et trouvailles de plage.' }[key]}</p>`;
+    if (!rows) rows = `<p class="empty">${{ graines: 'Tante Pearl rachète tes légumes et fruits. Tu n\'en as pas sur toi.', poisson: 'Winston rachète le poisson. Va lancer ta ligne !', cafe: 'Zion rachète les herbes, œufs, laits, plats et trouvailles de plage.', boutique: 'Desta rachète le quartz rose et les coquillages pour ses bijoux.' }[key]}</p>`;
   }
   return `<h2>${sh.name}</h2><p class="who"><b>${sh.keeper}</b> ${heartsRow(hearts(sh.npc))}<br>« ${sh.hello} »</p>` + tabsHTML(tabs, tab) + `<div class="list">${rows}</div>` + foot();
 }
 function binHTML() {
   let rows = '';
-  for (const [s, k] of sellable(['crop', 'fish', 'herb', 'forage', 'product', 'food'])) {
+  for (const [s, k] of sellable(['crop', 'fish', 'herb', 'forage', 'product', 'food', 'res', 'fert', 'bait', 'place'])) {
     const it = ITEMS[s.id];
-    rows += rowHTML(icon(s.id), it.name, `${s.q} sur toi`, it.sell, `<button class="btn sm" data-ship="${k}">Déposer</button>${s.q > 1 ? `<button class="btn sm" data-shipall="${k}">Tout</button>` : ''}`);
+    rows += rowHTML(icon(s.id), it.name + (s.qa ? ` · ${QUAL[s.qa].name}` : ''), `${s.q} sur toi`, sellOf(s.id, s.qa), `<button class="btn sm" data-ship="${k}">Déposer</button>${s.q > 1 ? `<button class="btn sm" data-shipall="${k}">Tout</button>` : ''}`);
   }
   if (!rows) rows = `<p class="empty">Rien à expédier. Dépose ici tes récoltes, poissons, œufs : ils sont payés le lendemain matin, au prix de base.</p>`;
-  const n = S.ship.reduce((a, [, q]) => a + q, 0), v = S.ship.reduce((a, [i, q]) => a + ITEMS[i].sell * q, 0);
+  const n = S.ship.reduce((a, [, q]) => a + q, 0), v = S.ship.reduce((a, [i, q, qa]) => a + sellOf(i, qa) * q, 0);
   return `<h2>Coffre d'expédition</h2><p class="who">Le transporteur passe chaque nuit. ${n ? `Dans le coffre : <b>${n} objet${n > 1 ? 's' : ''}</b>, soit ${v} g demain matin.` : 'Le coffre est vide.'}</p><div class="list" style="margin-top:12px">${rows}</div>` + foot();
 }
 function sleepHTML() {
@@ -152,6 +157,7 @@ function dayHTML() {
   if (r.grown) lines += `<li>${r.grown} culture${r.grown > 1 ? 's ont' : ' a'} poussé cette nuit.</li>`;
   if (r.eggs) lines += `<li>${r.eggs} œuf${r.eggs > 1 ? 's' : ''} t'attendent au poulailler.</li>`;
   if (r.milk) lines += `<li>${r.milk} bidon${r.milk > 1 ? 's' : ''} de lait à l'étable.</li>`;
+  if (r.built) lines += `<li><b>${BUILDS[r.built].name} construit !</b> Les potes de Zion ont bossé toute la nuit.</li>`;
   for (const u of r.ups) lines += `<li>${u} !</li>`;
   if (wet(S.weather)) lines += `<li>La pluie a arrosé tes cultures.</li>`;
   if (rainbowFor(S.day)) lines += `<li>Un arc-en-ciel est apparu au-dessus de la rivière.</li>`;
@@ -170,7 +176,10 @@ function helpHTML() {
     <dt><kbd>B</kbd></dt><dd>Sac à dos (30 emplacements) : clique deux cases pour les échanger</dd>
     <dt><kbd>C</kbd></dt><dd>Carnet : quêtes, compétences, amis, poissons</dd>
     <dt><kbd>F</kbd></dt><dd>Manger l'aliment sélectionné (rend de l'énergie)</dd>
+    <dt><kbd>K</kbd></dt><dd>Artisanat : atelier et cuisine</dd>
+    <dt><kbd>Échap</kbd></dt><dd>Menu : sauvegardes, paramètres, son, mode Test</dd>
     <dt><kbd>M</kbd></dt><dd>Couper ou remettre le son</dd>
+    <dt>Machette, pioche</dt><dd>Dégage branches, broussailles, souches et rochers : bois, fibre et pierre pour l'artisanat.</dd>
     <dt>Pêche</dt><dd>Vise l'eau, attends le <b>!</b>, appuie, puis maintiens <kbd>Espace</kbd> pour garder le poisson dans la barre verte.</dd>
     <dt>Saisons</dt><dd>28 jours chacune. Chaque graine pousse dans ses saisons seulement. La pluie arrose les cultures.</dd>
     <dt>Journée</dt><dd>Les boutiques ferment en fin d'après-midi. Dors avant 2h du matin, sinon tu t'écroules.</dd>
@@ -220,9 +229,9 @@ function animalsHTML() {
 }
 
 // Carnet : quêtes, compétences, amis, poissons
-function openBook(tab = 'quests') { openModal('book', { tab }); }
+function openBook(tab = 'legend') { openModal('book', { tab }); }
 function bookHTML() {
-  const tab = MODAL.tab, tabs = [['quests', 'Quêtes'], ['skills', 'Compétences'], ['friends', 'Amis'], ['fish', 'Poissons']];
+  const tab = MODAL.tab, tabs = [['legend', 'Légende'], ['quests', 'Quêtes'], ['skills', 'Compétences'], ['talents', `Talents${talentPoints() > 0 ? ` (${talentPoints()})` : ''}`], ['friends', 'Amis'], ['fish', 'Poissons']];
   let body = '';
   if (tab === 'quests') {
     const act = activeQuests();
@@ -240,7 +249,9 @@ function bookHTML() {
     }).join('');
   } else if (tab === 'friends') {
     body = npcs.map(n => { const f = friend(n.id); return `<div class="skill"><b>${n.name}${n.shop ? ` <small>· ${SHOPS[n.shop].name}</small>` : ''}</b><span style="justify-self:end">${f.met ? heartsRow(hearts(n.id)) : '<small>Pas encore rencontré</small>'}</span><small>${f.met && hearts(n.id) >= 2 ? tasteNames(n) : 'Parle-lui et offre-lui des cadeaux.'}</small></div>`; }).join('');
-  } else {
+  } else if (tab === 'talents') body = talentsHTML();
+  else if (tab === 'legend') body = legendHTML();
+  else {
     body = `<div class="list">${Object.entries(ITEMS).filter(([, it]) => it.kind === 'fish').map(([fid, it]) => {
       const L = S.fishLog[fid];
       return `<div class="row${L ? ' on' : ''}"><img src="${icon(fid)}" alt="" style="${L ? '' : 'filter:brightness(0) opacity(.35)'}"><div class="nm"><b>${L ? it.name : '???'}</b><small>${L ? `${L.n} pêché${L.n > 1 ? 's' : ''} · record ${L.max} cm` : 'Pas encore pêché'}</small></div><span class="price">${L ? `<span class="coin"></span>${it.sell} g` : ''}</span><span></span></div>`;
@@ -290,12 +301,12 @@ modal.addEventListener('click', e => {
   }
   if (d.sell || d.sellall) {
     const k = +(d.sell || d.sellall), s = S.inv[k]; if (!s) return;
-    const n = d.sellall ? s.q : 1, gain = priceSell(MODAL.key, s.id) * n; addGold(gain, true); takeFrom(k, n); sfx('coin'); renderModal(); return;
+    const n = d.sellall ? s.q : 1, gain = priceSell(MODAL.key, s.id, s.qa) * n; addGold(gain, true); takeFrom(k, n); sfx('coin'); renderModal(); return;
   }
   if (d.ship || d.shipall) {
     const k = +(d.ship || d.shipall), s = S.inv[k]; if (!s) return;
-    const n = d.shipall ? s.q : 1, ex = S.ship.find(e2 => e2[0] === s.id);
-    if (ex) ex[1] += n; else S.ship.push([s.id, n]);
+    const n = d.shipall ? s.q : 1, ex = S.ship.find(e2 => e2[0] === s.id && (e2[2] || 0) === (s.qa || 0));
+    if (ex) ex[1] += n; else S.ship.push([s.id, n, s.qa || 0]);
     takeFrom(k, n); sfx('plant'); renderModal(); return;
   }
   if (d.gift) {
@@ -332,16 +343,19 @@ function updateHUD(ripe) {
   else if (S.fish.phase === 'bite') pr = 'Espace · Ferrer !';
   else if (S.fish.phase === 'game') pr = 'Maintiens Espace pour monter la barre';
   else if (ripe) pr = 'Espace ou E · Récolter';
+  else if (!busy() && nodeAt(targetKey())) { const dd = DEBRIS[nodeAt(targetKey()).type]; pr = `Espace · ${dd.name} (${dd.tool})`; }
   else if (it) pr = `E · ${it.label}`;
   const pe = $('#prompt'); if (pe.textContent !== pr) { pe.textContent = pr; pe.classList.toggle('on', !!pr); }
-  const h = `${S.day}|${Math.floor(S.time / 10)}|${S.gold}|${Math.round(S.energy)}|${S.weather}`;
+  const h = `${S.day}|${Math.floor(S.time / 10)}|${S.gold}|${Math.round(S.energy)}|${S.weather}|${totalXP()}`;
   if (h === lastHud.k) return; lastHud.k = h;
   $('#cl-wd').textContent = WEEK[(S.day - 1) % 7]; $('#cl-d').textContent = dom(S.day);
   $('#cl-season').textContent = SEASONS[seasonOf(S.day)];
   $('#cl-t').textContent = fmtH(S.time); $('#cl-g').textContent = S.gold.toLocaleString('fr-FR') + ' g';
   $('#cl-sun').style.background = S.time >= 1170 || S.time < 330 ? '#c9d3ff' : '#f6c026';
+  const pl = plvl(); $('#cl-lv').textContent = `Niv. ${pl}`;
+  $('#cl-xp').style.width = (pl >= MAX_PL ? 100 : (totalXP() - plXP(pl)) / (plXP(pl + 1) - plXP(pl)) * 100) + '%';
   $('#cl-wx').innerHTML = WX_SVG[S.weather]; $('#cl-wx').setAttribute('aria-label', WX_NAMES[S.weather]);
-  const ef = $('#en-fill'); ef.style.height = (S.energy / MAX_EN * 100) + '%'; ef.style.background = S.energy < 25 ? '#e2362f' : S.energy < 50 ? '#f6c026' : '#2fa84f';
+  const ef = $('#en-fill'); ef.style.height = (S.energy / maxEn() * 100) + '%'; ef.style.background = S.energy < 25 ? '#e2362f' : S.energy < 50 ? '#f6c026' : '#2fa84f';
 }
 $('#help-btn').addEventListener('click', () => { if (!S.title && !S.modal) openHelp(); });
 $('#book-btn').addEventListener('click', () => { if (!S.title && !S.modal) openBook(); });

@@ -108,6 +108,54 @@ function icon(id, tier = 0) {
     x.beginPath(); x.roundRect(10, 24, 44, 30, 8); fs('#e8c657');
     x.save(); x.strokeStyle = 'rgba(120,80,10,.6)'; x.lineWidth = 2; for (const k of [20, 28, 36, 44]) { x.beginPath(); x.moveTo(k, 28); x.lineTo(k + 4, 50); x.stroke(); } x.restore();
     x.save(); x.strokeStyle = '#e2362f'; x.lineWidth = 4; x.beginPath(); x.moveTo(10, 38); x.lineTo(54, 38); x.stroke(); x.restore();
+  } else if (id === 'machette') {
+    stick(14, 54, 26, 42, 6, wood);
+    x.beginPath(); x.moveTo(24, 40); x.quadraticCurveTo(44, 10, 58, 6); x.quadraticCurveTo(52, 26, 30, 46); x.closePath(); fs(metal); shine(46, 18, 4);
+  } else if (id === 'pioche') {
+    stick(16, 56, 40, 20, 5, wood);
+    x.beginPath(); x.moveTo(14, 22); x.quadraticCurveTo(38, 4, 60, 22); x.lineTo(54, 26); x.quadraticCurveTo(38, 14, 22, 28); x.closePath(); fs(metal);
+  } else if (id === 'bois') {
+    for (const [y, l] of [[44, 0], [30, 6], [16, 2]]) { x.beginPath(); x.roundRect(8 + l, y, 44, 14, 7); fs('#a8774e'); ell(52 + l, y + 7, 5, 7, '#e8c79a'); }
+  } else if (id === 'pierre') {
+    x.beginPath(); x.moveTo(10, 46); x.lineTo(16, 24); x.lineTo(34, 14); x.lineTo(52, 22); x.lineTo(56, 44); x.lineTo(38, 54); x.closePath(); fs('#a9a39b'); shine(26, 26, 5);
+  } else if (id === 'fibre') {
+    x.save(); x.strokeStyle = INK; x.lineWidth = 7; for (const a of [-0.5, -0.2, 0.1, 0.4]) { x.beginPath(); x.moveTo(32, 58); x.quadraticCurveTo(32 + a * 30, 30, 32 + a * 50, 8); x.stroke(); } x.strokeStyle = '#8fc04a'; x.lineWidth = 3.5; for (const a of [-0.5, -0.2, 0.1, 0.4]) { x.beginPath(); x.moveTo(32, 58); x.quadraticCurveTo(32 + a * 30, 30, 32 + a * 50, 8); x.stroke(); } x.restore();
+    x.beginPath(); x.roundRect(24, 40, 16, 8, 3); fs('#e2362f');
+  } else if (id === 'quartz') {
+    x.beginPath(); x.moveTo(32, 6); x.lineTo(48, 24); x.lineTo(42, 56); x.lineTo(22, 56); x.lineTo(16, 24); x.closePath(); fs('#ff9fc0');
+    x.save(); x.strokeStyle = 'rgba(255,255,255,.7)'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(32, 10); x.lineTo(30, 50); x.stroke(); x.restore();
+  } else if (id === 'planche') {
+    for (const y of [16, 30, 44]) { x.beginPath(); x.roundRect(6, y, 52, 11, 3); fs('#d39a5f'); }
+    dots([[14, 21], [50, 21], [14, 35], [50, 35], [14, 49], [50, 49]], '#5b3a2a', 1.8);
+  } else if (id === 'corde') {
+    x.save(); x.strokeStyle = INK; x.lineWidth = 10; x.beginPath(); x.arc(32, 34, 18, 0.2, Math.PI * 1.9); x.stroke(); x.strokeStyle = '#e8c79a'; x.lineWidth = 6; x.stroke(); x.restore();
+    x.save(); x.strokeStyle = INK; x.lineWidth = 6; x.beginPath(); x.arc(32, 34, 8, 0, Math.PI * 2); x.stroke(); x.strokeStyle = '#d6b07a'; x.lineWidth = 3; x.stroke(); x.restore();
+  } else if (id === 'engrais') {
+    x.beginPath(); x.moveTo(14, 18); x.lineTo(50, 18); x.lineTo(54, 56); x.lineTo(10, 56); x.closePath(); fs('#8a5a3a');
+    ell(32, 18, 18, 5, '#5b3a2a'); ell(32, 40, 9, 9, '#6a4426'); x.beginPath(); x.moveTo(32, 30); x.lineTo(40, 22); x.lineTo(42, 32); x.closePath(); fs('#2fa84f');
+  } else if (id === 'arroseur') {
+    x.beginPath(); x.roundRect(20, 46, 24, 10, 3); fs('#8a5a3a'); stick(32, 46, 32, 22, 4, '#7fa5c4');
+    x.beginPath(); x.roundRect(14, 16, 36, 8, 4); fs('#2fb6a7');
+    x.save(); x.strokeStyle = '#17a9c7'; x.lineWidth = 3; for (const a of [-1, 1]) { x.beginPath(); x.moveTo(32 + a * 18, 20); x.quadraticCurveTo(32 + a * 30, 18, 32 + a * 30, 34); x.stroke(); } x.restore();
+  } else if (id === 'appat') {
+    x.beginPath(); x.roundRect(12, 22, 40, 32, 6); fs('#c9a46a'); x.beginPath(); x.roundRect(10, 16, 44, 10, 4); fs('#e2362f');
+    x.save(); x.strokeStyle = '#ff7aa0'; x.lineWidth = 5; x.beginPath(); x.moveTo(20, 40); x.quadraticCurveTo(30, 30, 38, 42); x.quadraticCurveTo(44, 50, 50, 36); x.stroke(); x.restore();
+  } else if (id === 'kit_jetee') {
+    for (const [y, r] of [[34, -0.2], [26, 0.15]]) { x.save(); x.translate(32, y); x.rotate(r); x.beginPath(); x.roundRect(-26, -6, 52, 12, 3); fs('#d39a5f'); x.restore(); }
+    x.save(); x.strokeStyle = INK; x.lineWidth = 7; x.beginPath(); x.moveTo(16, 50); x.lineTo(48, 18); x.stroke(); x.strokeStyle = '#e8c79a'; x.lineWidth = 3.5; x.stroke(); x.restore();
+    x.beginPath(); x.roundRect(36, 40, 18, 16, 3); fs('#aeb8c6');
+  } else if (id === 'jus_ananas') {
+    x.beginPath(); x.moveTo(16, 18); x.lineTo(48, 18); x.lineTo(44, 58); x.lineTo(20, 58); x.closePath(); fs('#f6c026'); x.save(); x.fillStyle = 'rgba(255,255,255,.5)'; x.fillRect(22, 24, 6, 26); x.restore();
+    stick(38, 18, 46, 4, 3, '#2fa84f'); ell(24, 16, 8, 4, '#2fa84f', -0.4);
+  } else if (id === 'poisson_grille') {
+    ell(32, 44, 26, 10, '#fbf6ec'); ell(30, 38, 18, 9, '#c26a2e'); x.beginPath(); x.moveTo(46, 38); x.lineTo(58, 30); x.lineTo(58, 46); x.closePath(); fs('#c26a2e');
+    x.save(); x.strokeStyle = '#5a2c0e'; x.lineWidth = 2.5; for (const k of [22, 30, 38]) { x.beginPath(); x.moveTo(k, 31); x.lineTo(k + 4, 45); x.stroke(); } x.restore(); ell(48, 50, 4, 3, '#e2362f');
+  } else if (id === 'gateau_coco') {
+    x.beginPath(); x.roundRect(10, 30, 44, 24, 6); fs('#f4e3c3'); x.beginPath(); x.roundRect(8, 24, 48, 12, 6); fs('#fffaf0');
+    dots([[16, 28], [24, 31], [34, 28], [44, 31], [50, 28]], '#c9a46a', 1.8); ell(32, 18, 6, 6, '#e2362f'); stick(32, 12, 36, 6, 2, '#2fa84f');
+  } else if (id === 'soupe') {
+    x.beginPath(); x.moveTo(8, 30); x.lineTo(56, 30); x.quadraticCurveTo(54, 58, 32, 58); x.quadraticCurveTo(10, 58, 8, 30); fs('#17a9c7'); ell(32, 30, 24, 6, '#f0902a');
+    dots([[24, 30], [36, 29], [42, 31]], '#2fa84f', 2.4); x.save(); x.strokeStyle = 'rgba(255,255,255,.7)'; x.lineWidth = 2.5; for (const k of [24, 34, 44]) { x.beginPath(); x.moveTo(k, 22); x.quadraticCurveTo(k - 4, 16, k, 10); x.stroke(); } x.restore();
   } else if (id.startsWith('hat_') || id.startsWith('shirt_') || id.startsWith('gl_')) {
     drawCosm(x, id, { fs, ell, shine, stick, INK });
   } else {
