@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "irie-bay", "runtimeExecutable": "node", "runtimeArgs": ["tools/serve.mjs", "18439"], "port": 18439 }
+  ]
+}
