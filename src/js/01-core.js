@@ -24,7 +24,7 @@ try { await Promise.race([document.fonts.load('48px "Lilita One"'), wait(1500)])
 // Données de jeu
 // =====================================================================
 const MIN_SEC = 0.6;              // 1 minute de jeu = 0,6 s
-const MAX_EN = 100, INV_SIZE = 30;
+const INV_SIZE = 30;
 const SEASONS = ['Brise', 'Soleil', 'Pluies', 'Alizés'];
 const SEASON_DESC = ['Fleurs partout, la terre est douce.', 'Chaleur et grand ciel bleu.', 'Averses, orages et cultures qui boivent.', 'Vent frais et mer agitée.'];
 const WEEK = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.'];
@@ -237,15 +237,18 @@ const P = { x: 11, z: 13.4, face: 0, walk: 0 };
 function defaultInv() {
   const a = new Array(INV_SIZE).fill(null);
   a[0] = { id: 'hoe', q: 1, t: 0 }; a[1] = { id: 'can', q: 1, t: 0 }; a[2] = { id: 'rod', q: 1, t: 0 };
-  a[3] = { id: 's_gombo', q: 10 }; a[4] = { id: 's_patate', q: 4 };
+  a[3] = { id: 'machette', q: 1, t: 0 }; a[4] = { id: 'pioche', q: 1, t: 0 };
+  a[5] = { id: 's_gombo', q: 10 }; a[6] = { id: 's_patate', q: 4 };
   return a;
 }
 function resetState() {
   Object.assign(S, {
-    day: 1, time: 360, gold: 500, energy: MAX_EN, inv: defaultInv(), sel: 0, water: canMax(0), ship: [],
+    day: 1, time: 360, gold: 500, energy: 100, inv: defaultInv(), sel: 0, water: canMax(0), ship: [],
     card: [0, 1], swing: 0, swingDur: 0.3, swingType: null, hold: false, modal: null, title: true, fade: false,
     fish: { phase: null }, zone: '', target: [0, 0], mouse: null, inside: false,
-    xp: { farm: 0, fish: 0, forage: 0, ranch: 0 }, friends: {}, stats: {}, done: [],
+    xp: { farm: 0, fish: 0, forage: 0, ranch: 0, craft: 0 }, friends: {}, stats: {}, done: [],
+    farmLvl: 0, built: { coop: false, barn: false }, building: null, unlocked: { gate: false, pier: false, lighthouse: false },
+    nodes: [], placed: [], talents: {}, story: { ch: 1, frags: [], flags: {}, seen: [], forms: 0 }, slot: 1, godEnergy: false,
     animals: [], shed: { oeuf: 0, oeuf_or: 0, lait: 0, lait_creme: 0 },
     owned: ['hat_none', 'hat_straw', 'shirt_tank', 'gl_none'], eq: { hat: 'hat_straw', shirt: 'shirt_tank', gl: 'gl_none' },
     fishLog: {}, picked: { coco: [], shells: [] }, weather: 'sun', warned: false, pending: [],

@@ -285,6 +285,7 @@ function makeCoop(x0, z0) {
   signBoard(g, 'Poulailler', cx, 2.7, fz + 0.3, 2.0, 0.55);
   solidBox(x0, z0, x0 + w + 1.2, fz + 0.1); reserve(x0 - 0.5, z0 - 0.5, x0 + w + 1.5, fz + 2.2);
   fadeable(g, x0 - 0.4, z0 - 3.4, x0 + w + 0.4, z0 + 0.8);
+  return g;
 }
 function makeBarn(x0, z0) {
   const g = new THREE.Group(); scene.add(g);
@@ -303,6 +304,7 @@ function makeBarn(x0, z0) {
   signBoard(g, 'Étable', x0 + 1.3, 2.7, fz + 0.2, 1.6, 0.5);
   solidBox(x0, z0, x0 + w, fz + 0.1); solidBox(x0 + w + 0.2, fz - 0.1, x0 + w + 1.5, fz + 0.9); reserve(x0 - 0.5, z0 - 0.5, x0 + w + 1.8, fz + 2.2);
   fadeable(g, x0 - 0.4, z0 - 3.4, x0 + w + 0.4, z0 + 0.8);
+  return g;
 }
 
 function makeStage() {
@@ -374,7 +376,8 @@ function buildWorld() {
   postB.flush(); railB.flush();
   signBoard(scene, 'Ton yard', 35.6, 1.3, 22.7, 1.9, 0.52);
   part(scene, G.box, '#5b3a2a', [0.1, 1.0, 0.1], [35.6, 0.5, 22.62]); solidBox(35.4, 22.5, 35.8, 22.8);
-  makeCoop(18, 4.6); makeBarn(25.5, 4.3);
+  BUILD_G.coop = { g: makeCoop(18, 4.6), site: makeSite(18, 4.6, 5.2, 3, 'Chantier : poulailler') };
+  BUILD_G.barn = { g: makeBarn(25.5, 4.3), site: makeSite(25.5, 4.3, 6.5, 4.3, 'Chantier : étable') };
   reserve(16.5, 3.5, 34, 12.8);
 
   // Épouvantail rasta et drapeau
@@ -384,6 +387,8 @@ function buildWorld() {
   part(scene, G.cyl, '#e2362f', [0.27, 0.35, 0.18], [6.6, 1.05, 14.4]);
   solidBox(6.4, 14.2, 6.8, 14.6);
   flagPole(5.4, 12.2, 3.8);
+  signBoard(scene, 'Agrandir', 15.6, 1.15, 12.97, 1.5, 0.42);
+  part(scene, G.box, '#5b3a2a', [0.08, 0.95, 0.08], [15.6, 0.47, 12.92]); solidBox(15.45, 12.8, 15.75, 13.05);
 
   // Pont sur la rivière
   const plankB = batch(G.box, 900), pierPost = batch(G.cyl6, 240);

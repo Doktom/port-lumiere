@@ -83,7 +83,7 @@ kbd{font-family:var(--f-body);font-weight:700;font-size:.85em;border:1.5px solid
 #fishing p{margin:0;font-size:12px;font-weight:700;text-align:center}
 #fish-c{width:110px;height:330px;display:block}
 
-#modal-wrap{position:fixed;inset:0;z-index:6;display:grid;place-items:center;background:rgba(20,24,58,.45);padding-left:var(--gl);padding-right:var(--gr)}
+#modal-wrap{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:rgba(20,24,58,.45);padding-left:var(--gl);padding-right:var(--gr)}
 #modal{width:min(580px, 100%);max-height:calc(100% - 48px);overflow:auto;padding:20px 20px 16px;box-sizing:border-box}
 #modal h2{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0;line-height:1.1;text-wrap:balance}
 #modal .who{margin:6px 0 0;font-size:15px;line-height:1.45;max-width:62ch}
@@ -141,7 +141,39 @@ kbd{font-family:var(--f-body);font-weight:700;font-size:.85em;border:1.5px solid
 #title .hint{margin:16px 0 0;font-size:14px;color:var(--paper);text-shadow:1px 1px 0 var(--ink);max-width:60ch;line-height:1.5}
 #title .hint kbd{color:var(--ink);text-shadow:none}
 
+.slot .star{position:absolute;left:4px;bottom:4px;width:8px;height:8px;border:1.5px solid var(--ink);transform:rotate(45deg);border-radius:2px}
+.cl-lvl{display:flex;align-items:center;justify-content:flex-end;gap:6px;font-weight:700;font-size:12px;margin-top:3px}
+.cl-lvl .bar{width:62px;min-width:0;height:7px}
+.cl-lvl .bar i{background:var(--gold)}
+#fps{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--gt) + 50px);font:700 12px var(--f-body);color:var(--paper);text-shadow:1px 1px 0 var(--ink)}
+#tracker hr{border:0;border-top:2px dashed rgba(36,26,46,.2);margin:7px 0}
+.cut{display:grid;gap:8px}
+.cut-who{justify-self:start;font-family:var(--f-display);font-size:17px;color:#fff;background:var(--who);border:2px solid var(--ink);border-radius:8px;padding:5px 10px 3px;box-shadow:2px 2px 0 var(--ink)}
+.cut-text{margin:4px 0 0;font-size:17px;line-height:1.55;max-width:60ch}
+.cut-n{opacity:.6;font-weight:700}
+.needs{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:5px}
+.need{display:inline-flex;align-items:center;gap:3px;font-size:12.5px;font-weight:700;padding:1px 6px 1px 2px;border-radius:6px;background:rgba(255,255,255,.65)}
+.need img{width:18px;height:18px}
+.need.ko{color:#a3202a}.need.ok{color:#1d7a39}
+.rank{color:var(--gold);font-size:15px;letter-spacing:-1px;text-shadow:1px 1px 0 var(--ink);text-align:center}
+.frag{width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);background:repeating-radial-gradient(circle,#3a3446 0 2px,#241a2e 2px 4px);justify-self:center;opacity:.35}
+.frag.got{background:radial-gradient(circle,#fff6c9 0 18%,#f6c026 19% 60%,#d39a10 61%);opacity:1}
+.slotnum{font-family:var(--f-display);font-size:24px;text-align:center}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:12px 0}
+.menu-grid .btn{padding:12px 14px 10px;font-size:17px}
+.set{display:grid;grid-template-columns:120px minmax(0,1fr) 36px;align-items:center;gap:10px;margin:7px 0;font-weight:700;font-size:14px}
+.set input[type=range]{width:100%;accent-color:var(--green)}
+.set b{text-align:right;font-variant-numeric:tabular-nums}
+.set.chk{grid-template-columns:auto minmax(0,1fr)}
+.set.chk input{width:20px;height:20px;accent-color:var(--green)}
+.set.chk small{display:block;font-weight:400;opacity:.75}
+.set select{font:inherit;padding:6px 8px;border:2px solid var(--ink);border-radius:8px;background:#fff;grid-column:2 / -1}
+.set input:focus-visible,.set select:focus-visible,.code:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.tgrid{display:flex;flex-wrap:wrap;gap:6px}
+.code{width:100%;box-sizing:border-box;font:12px ui-monospace,Consolas,monospace;border:2px solid var(--ink);border-radius:8px;padding:6px;margin:4px 0;background:#fff;resize:vertical;-webkit-user-select:text;user-select:text}
 @media (max-width:640px){
+  .set{grid-template-columns:90px minmax(0,1fr) 32px}
+  #top-left{flex-wrap:wrap;max-width:calc(100vw - 170px)}
   #energy{bottom:calc(var(--gb) + var(--slot) + 30px);height:110px}
   #clock{min-width:0;padding:10px 10px 8px}
   .cl-time{font-size:24px}

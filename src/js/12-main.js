@@ -95,8 +95,9 @@ function actionDown() {
 }
 function actionUp() { S.hold = false; }
 addEventListener('keydown', e => {
-  if (S.title) return;
+  if (S.title) { if (S.modal && e.code === 'Escape') { e.preventDefault(); closeModal(); } return; }
   if (e.code === 'Tab') return;
+  if (S.modal === 'cut') { if (['Escape', 'KeyE', 'Space', 'Enter'].includes(e.code)) { e.preventDefault(); if (!e.repeat) cutNext(); } return; }
   if (S.modal) {
     if (e.code === 'Escape' || (e.code === 'KeyE' && S.modal !== 'day')) { e.preventDefault(); closeModal(); }
     if (S.modal === 'day' && (e.code === 'Space' || e.code === 'Enter')) { e.preventDefault(); closeModal(); }
@@ -113,7 +114,8 @@ addEventListener('keydown', e => {
   else if (kk === 'h' || e.key === '?') openHelp();
   else if (kk === 'c' || kk === 'j') openBook();
   else if (kk === 'b' || e.code === 'KeyI') openBag();
-  else if (e.code === 'Escape') openHelp();
+  else if (kk === 'k') openCraft();
+  else if (e.code === 'Escape') openMenu();
   if (e.code.startsWith('Arrow')) e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'Space') actionUp(); });
@@ -190,7 +192,7 @@ function updatePlayer(dt, tsec) {
   } else if (S.fish.phase) ar = -2.1 + (S.fish.phase === 'game' ? Math.sin(tsec * 18) * 0.06 : 0);
   player.armR.rotation.x = ar;
   const s = S.inv[S.sel]; const show = S.fish.phase ? 'rod' : s ? (ITEMS[s.id].kind === 'seed' ? 'seed' : s.id) : null;
-  for (const k of ['hoe', 'can', 'rod', 'seed']) tools[k].visible = k === show && (k !== 'seed' || S.swing > 0);
+  for (const k of ['hoe', 'can', 'rod', 'seed', 'machette', 'pioche']) tools[k].visible = k === show && (k !== 'seed' || S.swing > 0);
   if (tools.can.visible) tools.can.rotation.x = S.swingType === 'can' && S.swing > 0 ? -0.9 : 0;
   const inside = P.x > 7 && P.x < 15 && P.z > 5 && P.z < 12;
   const behind = P.x > 6.5 && P.x < 15.5 && P.z > 2.5 && P.z <= 5.2;
@@ -221,11 +223,11 @@ function loop(now) {
   const rawDt = (now - prev) / 1000, dt = Math.min(0.05, rawDt); prev = now;
   const tsec = now / 1000;
   // qualité adaptative : coupe les reflets puis baisse la résolution si ça rame
-  perf.acc += rawDt; perf.n++;
+  perf.acc += rawDt; perf.n++; updateFPS(rawDt); if (SET.quality !== 'auto') { perf.acc = 0; perf.n = 0; }
   if (perf.n >= 90) { const avg = perf.acc / perf.n; perf.acc = 0; perf.n = 0; if (avg > 0.034) { if (++perf.bad >= 2) { perf.bad = 0; if (QUALITY.reflect) QUALITY.reflect = false; else if (PR > 1.1) { PR = 1; resize(); } } } else perf.bad = 0; }
   waterMesh.material.uniforms.uTime.value = tsec;
   if (!busy()) {
-    S.time += dt / MIN_SEC;
+    S.time += dt / MIN_SEC * (SET.test ? SET.speed : 1);
     if (S.time >= 1440 && !S.warned) { S.warned = true; toast("Il est minuit… pense à aller dormir."); }
     if (S.time >= 1560) { S.time = 1560; sleepNow(true); }
   }
@@ -256,6 +258,8 @@ function loop(now) {
   beam.rotation.y = tsec * 0.6;
   for (const f of flags) f.g.rotation.y = Math.sin(tsec * 2.2 + f.ph) * 0.3 * (0.4 + WIND.uWind.value * 0.6);
   if (stageObjs.disc) stageObjs.disc.rotation.y += dt * 1.2;
+  for (const m of placedMeshes.values()) m.userData.head.rotation.y += dt * 3;
+  updateTurtle(dt, tsec);
   const pulse = (AC && AC.state === 'running' && !muted && AU.on) ? AU.pulse : beatFallback(tsec);
   for (const sp of speakers) sp.m.scale.set(sp.sx * (1 + pulse * 0.14), sp.sx * (1 + pulse * 0.14), sp.sz * (1 + pulse * 0.7));
   for (const f of fades) {
@@ -271,6 +275,7 @@ function loop(now) {
 // =====================================================================
 resize();
 buildWorld(); initNature();
+initNodeSpots(); initLocks(); turtle = makeTurtle(); rebuildStakes(); refreshBuildings();
 buildPlayer(); buildNPCs(); buildWalk(); placeAllNPCs(); refreshForage();
 bobber = new THREE.Group(); part(bobber, G.sph, '#e2362f', [0.08, 0.06, 0.08], [0, 0.03, 0]); part(bobber, G.sph, '#ffffff', [0.075, 0.05, 0.075], [0, -0.02, 0]); bobber.visible = false; scene.add(bobber);
 fishLine = new THREE.Line(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Array(39).fill(0), 3)), new THREE.LineBasicMaterial({ color: '#f6f1e6' }));
@@ -283,24 +288,30 @@ fishLine.frustumCulled = false; fishLine.layers.set(1); fishLine.visible = false
   highlight.rotation.x = -Math.PI / 2; highlight.visible = false; highlight.layers.set(1); highlight.renderOrder = 5; scene.add(highlight);
 }
 addEventListener('resize', resize);
+$('#menu-btn').addEventListener('click', () => { if (!S.title && !S.modal) openMenu(); });
+$('#craft-btn').addEventListener('click', () => { if (!S.title && !S.modal) openCraft(); });
+$('#test-btn').addEventListener('click', () => { if (!S.title && !S.modal) openMenu('test'); });
 renderHotbar();
 camera.position.set(30, CAM_Y - 2, 26 + CAM_Z - 1); camLook.set(30, 0, 26); camera.lookAt(camLook);
 
-function startGame(data) {
-  if (data) applySave(data); else applySave({ plots: [] });
+function startGame(data, slot = 1) {
+  cutQueue.length = 0;
+  if (data) applySave(data); else { applySave({ plots: [] }); seedFarmDebris(); }
+  S.slot = slot; try { localStorage.setItem(LAST_KEY, String(slot)); } catch (e) {}
   S.title = false; $('#title').hidden = true; $('#hud').hidden = false; if (matchMedia('(pointer: coarse)').matches) $('#touch').hidden = false;
   S.zone = zoneOf(P.x, P.z); S.weather = weatherFor(S.day);
   camera.position.set(clamp(P.x, 10, W - 10), CAM_Y, clamp(P.z, 8, 58) + CAM_Z); camLook.set(clamp(P.x, 10, W - 10), 0.5, clamp(P.z, 8, 58));
   renderHotbar(); renderTracker(); canvas.focus(); showZone(S.zone);
-  if (!data) setTimeout(() => toast("Bienvenue à Irie Bay ! Laboure le champ avec la houe, sème, arrose. Tante Pearl vend des graines au village, à l'est.", true), 600);
+  if (!data) { save(); setTimeout(() => cutscene(CUTS.intro, () => toast("Dégage le champ avec la machette et la pioche, puis laboure, sème, arrose. Tante Pearl vend des graines au village, à l'est.", true)), 500); }
+  else checkStory();
 }
 function boot(hot) {
-  const saved = loadSave();
-  if (saved) { const b = $('#btn-continue'); b.hidden = false; b.textContent = `Continuer · ${SEASONS[seasonOf(saved.day)]} jour ${dom(saved.day)}`; b.onclick = () => { audio(); startGame(saved); }; }
-  $('#btn-new').onclick = () => { audio(); startGame(null); };
-  if (hot && hot.state) startGame(hot.state);
-  if (location.hash === '#debug') window.IB = { placeAllNPCs, AU, getAC: () => AC, walk, blocked, boxes, W, H, S, P, ENV, QUALITY, npcs, forage, plots, shellSpots, THREE, camera, scene, startGame, sleepNow, weatherFor, findPath, SPOTS, animalMeshes, openShop, openBook, openBag, openNPC, openAnimals, buyAnimal, toast, spawnAnimalMesh, syncAnimalMeshes, setW: w => { S.weather = w; }, completeQuest, QUESTS };
+  migrateLegacy(); applySettings(); refreshTitleButtons();
+  $('#btn-new').onclick = () => { audio(); openMenu('saves', 'new'); };
+  $('#btn-load').onclick = () => { audio(); openMenu('saves', 'load'); };
+  if (hot && hot.state) startGame(hot.state, hot.slot || lastSlot() || 1);
+  if (location.hash === '#debug') window.IB = { SET, testAction, checkStory, plvl, craft, addItem, nodeAt, cutQueue, readSlot, placeAllNPCs, AU, getAC: () => AC, walk, blocked, boxes, W, H, S, P, ENV, QUALITY, npcs, forage, plots, shellSpots, THREE, camera, scene, startGame, sleepNow, weatherFor, findPath, SPOTS, animalMeshes, openShop, openBook, openBag, openNPC, openAnimals, buyAnimal, toast, spawnAnimalMesh, syncAnimalMeshes, setW: w => { S.weather = w; }, completeQuest, QUESTS };
   requestAnimationFrame(t => { prev = t; loop(t); });
 }
-window.claude?.hot?.snapshot?.(() => ({ state: S.title ? null : serialize(true) }));
+window.claude?.hot?.snapshot?.(() => ({ state: S.title ? null : serialize(true), slot: S.slot }));
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});

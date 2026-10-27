@@ -101,7 +101,7 @@ function scatterNature() {
   });
   // décor fixe de la ferme
   addBush(5.6, 11.2); addBush(32.6, 11); addBush(5.9, 40.6);
-  addMango(15.8, 14.6, 1.1);
+  addMango(7.9, 13.5, 1.1);
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = id(i, j), t = tiles[k], x = i + 0.25 + rnd() * 0.5, z = j + 0.25 + rnd() * 0.5;
     if (t === GRASS) {
